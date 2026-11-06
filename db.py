@@ -10,12 +10,14 @@ DB_CONFIG = {
 
 def get_connection():
     try:
-        return mysql.connector.connect(**DB_CONFIG)
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
     except mysql.connector.Error as err:
-        print("Database error:", err)
+        print("Database connection error:", err)
         return None
 
 def setup_database():
+    conn = None
     try:
         conn = mysql.connector.connect(host=DB_CONFIG["host"], user=DB_CONFIG["user"], password=DB_CONFIG["password"])
         cursor = conn.cursor()
@@ -24,7 +26,8 @@ def setup_database():
         conn.close()
 
         conn = get_connection()
-        if conn is None: return
+        if conn is None:
+            return False
         cursor = conn.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS vehicles (
             vehicle_number VARCHAR(20) PRIMARY KEY, owner_name VARCHAR(50), vehicle_type VARCHAR(10))""")
@@ -38,86 +41,163 @@ def setup_database():
 
         cursor.execute("SELECT COUNT(*) FROM parking_slots")
         if cursor.fetchone()[0] == 0:
-            slots = [("C1","car",False), ("C2","car",False), ("C3","car",False),
-                     ("C4","car",False), ("C5","car",False), ("C6","car",False),
-                     ("B1","bike",False), ("B2","bike",False), ("B3","bike",False), ("B4","bike",False)]
+            slots = [("C1", "car", False), ("C2", "car", False), ("C3", "car", False),
+                     ("C4", "car", False), ("C5", "car", False), ("C6", "car", False),
+                     ("B1", "bike", False), ("B2", "bike", False), ("B3", "bike", False), ("B4", "bike", False)]
             cursor.executemany("INSERT INTO parking_slots VALUES (%s, %s, %s)", slots)
             conn.commit()
         cursor.close()
-        conn.close()
+        return True
     except mysql.connector.Error as err:
-        print("Setup error:", err)
+        print("Database setup error:", err)
+        return False
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_all_slots():
-    conn = get_connection()
-    if conn is None: return []
-    cursor = conn.cursor()
-    cursor.execute("SELECT slot_id, slot_type, is_occupied FROM parking_slots")
-    slots = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return slots
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return []
+        cursor = conn.cursor()
+        cursor.execute("SELECT slot_id, slot_type, is_occupied FROM parking_slots")
+        slots = cursor.fetchall()
+        cursor.close()
+        return slots
+    except mysql.connector.Error as err:
+        print("Error fetching slots:", err)
+        return []
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def update_slot_status(slot_id, is_occupied):
-    conn = get_connection()
-    if conn is None: return
-    cursor = conn.cursor()
-    cursor.execute("UPDATE parking_slots SET is_occupied = %s WHERE slot_id = %s", (is_occupied, slot_id))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return
+        cursor = conn.cursor()
+        cursor.execute("UPDATE parking_slots SET is_occupied = %s WHERE slot_id = %s", (is_occupied, slot_id))
+        conn.commit()
+        cursor.close()
+    except mysql.connector.Error as err:
+        print("Error updating slot status:", err)
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def save_vehicle(vehicle_number, owner_name, vehicle_type):
-    conn = get_connection()
-    if conn is None: return
-    cursor = conn.cursor()
-    query = """INSERT INTO vehicles (vehicle_number, owner_name, vehicle_type) VALUES (%s, %s, %s)
-               ON DUPLICATE KEY UPDATE owner_name = %s, vehicle_type = %s"""
-    cursor.execute(query, (vehicle_number, owner_name, vehicle_type, owner_name, vehicle_type))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return
+        cursor = conn.cursor()
+        query = """INSERT INTO vehicles (vehicle_number, owner_name, vehicle_type) VALUES (%s, %s, %s)
+                   ON DUPLICATE KEY UPDATE owner_name = %s, vehicle_type = %s"""
+        cursor.execute(query, (vehicle_number, owner_name, vehicle_type, owner_name, vehicle_type))
+        conn.commit()
+        cursor.close()
+    except mysql.connector.Error as err:
+        print("Error saving vehicle:", err)
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def park_vehicle_entry(vehicle_number, slot_id, entry_time):
-    conn = get_connection()
-    if conn is None: return
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO payments (vehicle_number, slot_id, entry_time) VALUES (%s, %s, %s)",
-                   (vehicle_number, slot_id, entry_time))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO payments (vehicle_number, slot_id, entry_time) VALUES (%s, %s, %s)",
+                       (vehicle_number, slot_id, entry_time))
+        conn.commit()
+        cursor.close()
+    except mysql.connector.Error as err:
+        print("Error recording vehicle entry:", err)
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_active_parking(vehicle_number):
-    conn = get_connection()
-    if conn is None: return None
-    cursor = conn.cursor()
-    query = """SELECT p.payment_id, p.slot_id, p.entry_time, v.owner_name, v.vehicle_type
-               FROM payments p JOIN vehicles v ON p.vehicle_number = v.vehicle_number
-               WHERE p.vehicle_number = %s AND p.exit_time IS NULL"""
-    cursor.execute(query, (vehicle_number,))
-    record = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return record
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return None
+        cursor = conn.cursor()
+        query = """SELECT p.payment_id, p.slot_id, p.entry_time, v.owner_name, v.vehicle_type
+                   FROM payments p JOIN vehicles v ON p.vehicle_number = v.vehicle_number
+                   WHERE p.vehicle_number = %s AND p.exit_time IS NULL"""
+        cursor.execute(query, (vehicle_number,))
+        record = cursor.fetchone()
+        cursor.close()
+        return record
+    except mysql.connector.Error as err:
+        print("Error checking active parking:", err)
+        return None
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+
+def get_all_active_parkings():
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return []
+        cursor = conn.cursor()
+        query = """SELECT p.vehicle_number, v.owner_name, v.vehicle_type, p.slot_id, p.entry_time
+                   FROM payments p JOIN vehicles v ON p.vehicle_number = v.vehicle_number
+                   WHERE p.exit_time IS NULL"""
+        cursor.execute(query)
+        records = cursor.fetchall()
+        cursor.close()
+        return records
+    except mysql.connector.Error as err:
+        print("Error fetching active parkings:", err)
+        return []
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def record_vehicle_exit(payment_id, exit_time, hours, amount):
-    conn = get_connection()
-    if conn is None: return
-    cursor = conn.cursor()
-    cursor.execute("UPDATE payments SET exit_time = %s, hours = %s, amount = %s WHERE payment_id = %s",
-                   (exit_time, hours, amount, payment_id))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return
+        cursor = conn.cursor()
+        cursor.execute("UPDATE payments SET exit_time = %s, hours = %s, amount = %s WHERE payment_id = %s",
+                       (exit_time, hours, amount, payment_id))
+        conn.commit()
+        cursor.close()
+    except mysql.connector.Error as err:
+        print("Error recording vehicle exit:", err)
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_payment_history():
-    conn = get_connection()
-    if conn is None: return []
-    cursor = conn.cursor()
-    cursor.execute("""SELECT payment_id, vehicle_number, slot_id, entry_time, exit_time, hours, amount
-                      FROM payments WHERE exit_time IS NOT NULL ORDER BY payment_id DESC""")
-    history = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return history
+    conn = None
+    try:
+        conn = get_connection()
+        if conn is None:
+            return []
+        cursor = conn.cursor()
+        cursor.execute("""SELECT payment_id, vehicle_number, slot_id, entry_time, exit_time, hours, amount
+                          FROM payments WHERE exit_time IS NOT NULL ORDER BY payment_id DESC""")
+        history = cursor.fetchall()
+        cursor.close()
+        return history
+    except mysql.connector.Error as err:
+        print("Error fetching payment history:", err)
+        return []
+    finally:
+        if conn and conn.is_connected():
+            conn.close()

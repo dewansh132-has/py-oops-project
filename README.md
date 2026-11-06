@@ -1,68 +1,53 @@
-<<<<<<< HEAD
 # Smart Parking Lot Management System
 
-A simple, terminal-based Parking Lot Management System written in Python with MySQL database connectivity. Designed for college students learning Object-Oriented Programming (OOP) concepts.
+## Project Objective
+The Smart Parking Lot Management System is a terminal-based application designed to manage and automate daily parking facility operations. At its core, the system handles slot allocation for cars and bikes, monitors entry and exit timestamps, calculates parking fees based on vehicle type and duration, generates itemized receipts, and records all transactions in a MySQL database with automated JSON and CSV backups.
 
 ---
 
-## 🛠️ Features
-1. **Park a Vehicle**: Input vehicle details, assign an available slot based on vehicle type (Car/Bike), and mark entry time in the database.
-2. **Exit a Vehicle & Print Receipt**: Calculate duration (minimum 1 hour, rounded up), calculate fee based on vehicle type using polymorphism, free the slot, and print an ASCII receipt.
-3. **Show Available Slots**: View real-time availability of car and bike slots.
-4. **View Payment History**: Browse past parking transactions and collected fees.
+## Instructions for Running the Project
+
+### 1. System Requirements
+Before running the application, ensure the following software is installed on the system:
+- Python 3.8 or higher
+- MySQL Server (via MySQL Community Server, XAMPP, or WampServer)
 
 ---
 
-## 📚 OOP Concepts Used
-- **Abstraction**: `Vehicle` is an abstract base class (`ABC`) with an abstract method `calculate_fee(hours)`.
-- **Inheritance**: `Car` and `Bike` classes inherit common properties (`vehicle_number`, `owner_name`) from `Vehicle`.
-- **Polymorphism**: `Car` and `Bike` override `calculate_fee(hours)` with their own hourly rates (`Rs. 30/hr` for cars, `Rs. 15/hr` for bikes).
-- **Composition**: `ParkingLot` contains and manages a collection of `ParkingSlot` objects (`self.slots`).
+### 2. Start the MySQL Service
+Ensure that the local MySQL service is active:
+- For XAMPP / WampServer: Start the MySQL module from the control panel.
+- For standalone MySQL: Ensure the Windows MySQL service is running.
 
 ---
 
-## 📋 Prerequisites
-1. **Python 3.x**
-2. **MySQL Server** (via MySQL Server, XAMPP, or WampServer)
-3. **MySQL Connector for Python**:
-   ```bash
-   pip install mysql-connector-python
-   ```
+### 3. Configure Database Credentials
+Open the `db.py` configuration file in an editor and update the database connection parameters to match your MySQL environment:
 
----
-
-## ⚙️ Database Configuration
-Open [db.py](file:///d:/NITW/SEM%20III/python/py%20project/db.py) and update your MySQL username and password if different:
 ```python
 DB_CONFIG = {
     "host": "localhost",
-    "user": "root",        # your MySQL username
-    "password": "",        # your MySQL password (e.g. "root" or "admin")
+    "user": "root",        # MySQL username (default: 'root')
+    "password": "",        # MySQL password (leave blank if no password is set)
     "database": "parking_db"
 }
 ```
 
-> **Note**: You don't need to manually create the database or tables. Running `parking.py` automatically initializes `parking_db`, creates the tables, and inserts the initial 10 parking slots. Alternatively, you can run the SQL script in MySQL Workbench or terminal:
-> ```bash
-> mysql -u root -p < setup.sql
-> ```
+*Note: Manual creation of the database and tables is not required. The application automatically initializes the database, creates the required schema, and inserts default slots upon first execution. Alternatively, the schema can be manually initialized by executing the provided `setup.sql` file.*
 
 ---
 
-## 🚀 How to Run
-Run the main script from the terminal:
+### 4. Execute the Application
+Navigate to the project root directory in the terminal and run the main entry point:
+
 ```bash
 python parking.py
 ```
 
 ---
 
-## 📂 Project Structure
-- [parking.py](file:///d:/NITW/SEM%20III/python/py%20project/parking.py): Contains OOP classes (`Vehicle`, `Car`, `Bike`, `ParkingSlot`, `ParkingLot`), receipt generator, and the interactive terminal menu.
-- [db.py](file:///d:/NITW/SEM%20III/python/py%20project/db.py): MySQL connection setup, table creation, and queries for slots, vehicles, and payments.
-- [setup.sql](file:///d:/NITW/SEM%20III/python/py%20project/setup.sql): Standalone SQL schema and initial slot data script.
-- [README.md](file:///d:/NITW/SEM%20III/python/py%20project/README.md): Project overview and run instructions.
-
-=======
-# py-oops-project
->>>>>>> f170edfc394bb0690f6f5080e84d1db9daf64a9e
+### 5. Output Files
+The application automatically creates and manages the following files during operation:
+- `receipts/`: Directory containing generated text receipts (`.txt`) for each completed vehicle exit.
+- `parking_data.json`: Local backup containing slot availability states and active parking records.
+- `payments_history.csv`: Exported transaction history generated via the menu export option.
