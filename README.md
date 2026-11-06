@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Smart Parking Lot Management System
 
 A simple, terminal-based Parking Lot Management System written in Python with MySQL database connectivity. Designed for college students learning Object-Oriented Programming (OOP) concepts.
@@ -62,3 +63,6 @@ python parking.py
 - [setup.sql](file:///d:/NITW/SEM%20III/python/py%20project/setup.sql): Standalone SQL schema and initial slot data script.
 - [README.md](file:///d:/NITW/SEM%20III/python/py%20project/README.md): Project overview and run instructions.
 
+=======
+# py-oops-project
+>>>>>>> f170edfc394bb0690f6f5080e84d1db9daf64a9e
